@@ -1,21 +1,35 @@
-clear;close all; clc
+function [BOLD,A,options] = Simulation(T,TR,n,SNR)
+% Simulate resting state fMRI signal
+% Input arguments:
+% T = total time points
+% TR = repetition time
+% n = number of regions
+%
+% Output
+% simulated BOLD signal
+%
+% Written by Oh Younghyun. Updated March 2023.
+%---------------------------------------------------------------------------------------------------------------------
+%
 % Simulate timeseries
 %==========================================================================
-rng('default')
 
 % Define variables and constants
 % -------------------------------------------------------------------------
-T  = 1200;                             % number of observations (scans)
-TR = 1;                               % repetition time or timing
-n  = 4;                               % number of regions or nodes
 t  = (1:T)*TR;                        % observation times
+switch SNR
+    case 1; sig_x = 4; sig_y = 4; case 2; sig_x = 4; sig_y = 8;
+    case 3; sig_x = 4; sig_y = 12; case 4; sig_x = 4; sig_y = 16;
+end
+        
+        
 
 % set options for the DCM structure
 options.nonlinear  = 0;
 options.two_state  = 0;
 options.stochastic = 0;
-options.centre     = 0;
-options.induced    = 0;
+options.centre     = 1;
+options.induced    = 1;
 
 % set DCM matrices
 A   = ones(n,n);
@@ -24,15 +38,15 @@ C   = zeros(n,n);
 D   = zeros(n,n,0);
 pP  = spm_dcm_fmri_priors(A,B,C,D,options);
 
-
-pP.A = randn(n,n)/6;
-pP.A = pP.A - diag(diag(pP.A));
+A = randn(n,n)/6;
+A = A-diag(diag(A));
+pP.A = A;
 pP.C = eye(n,n);
 pP.transit = randn(n,1)/16;
 
 % integrate states
 % -------------------------------------------------------------------------
-U.u  = spm_rand_mar(T,n,1/2)/4;      % endogenous fluctuations
+U.u  = spm_rand_mar(T,n,1/2)/sig_x;      % endogenous fluctuations
 U.dt = TR;
 M.f  = 'spm_fx_fmri';
 M.x  = sparse(n,5);
@@ -46,23 +60,9 @@ end
 
 % observation noise process
 % -------------------------------------------------------------------------
-e    = spm_rand_mar(T,n,1/2)/8;
+e    = spm_rand_mar(T,n,1/2)/sig_y;
 
-% nonlinear system identification (DCM for CSD) over subjects
-%==========================================================================
-DCM.options = options;
+BOLD = y+e;
 
-DCM.a    = ones(n,n);
-DCM.b    = zeros(n,n,0);
-DCM.c    = zeros(n,1);
-DCM.d    = zeros(n,n,0);
 
-DCM.Y.y  = y+e;
-DCM.Y.dt = TR;
-DCM.U.u  = zeros(T,1);
-DCM.U.dt = TR;
 
-% provisional inversion
-%--------------------------------------------------------------------------
-DCM   = spm_dcm_fmri_csd(DCM);
-corr(pP.A(:),DCM.Ep.A(:))
