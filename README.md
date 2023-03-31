@@ -1,4 +1,4 @@
-# This repository contains neccessary file to run DCM tutorial.
+# This repository contains neccessary files to run DCM tutorial.
 
 ## Explanation of files
 1. main: replicate the simulation and DCM analyses.
