@@ -20,7 +20,7 @@ rdcm = tapas_rdcm_model_specification(Y,[],[]);
 rDCM = output.Ep.A; 
 rDCM = rDCM - diag(diag(rDCM)); 
 
-% or load already analyzed rDCM file
+%% or load already analyzed rDCM file
 addpath('./results')
 rDCM = importdata('rDCM_MMP360.mat');
 
@@ -34,4 +34,17 @@ colormap(cMap)
 xlabel('source')
 ylabel('target')
 
+outflow = sum(abs(rDCM),1);
+inflow = sum(abs(rDCM),2);
+
+surfaceplot(outflow,'MMP','both')
+surfaceplot(inflow,'MMP','both')
+
+FC = importdata('FC_MMP360.mat').FC;
+
+outflow = sum(abs(FC),1);
+inflow = sum(abs(FC),2);
+
+surfaceplot(outflow,'MMP','both')
+surfaceplot(inflow,'MMP','both')
 
